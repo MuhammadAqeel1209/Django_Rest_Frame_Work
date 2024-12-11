@@ -1,6 +1,6 @@
 # Django Rest Framework - Car Management API
 
-This is a Django Rest Framework (DRF) project that provides an API to manage a list of cars. The API allows you to view all cars or fetch details of a specific car using its primary key.
+This is a Django Rest Framework (DRF) project that provides an API to manage a list of cars. The API allows you to view, add, update, or delete car details.
 
 ---
 
@@ -29,13 +29,6 @@ django_rest\Scripts\activate
 ```
 (For macOS/Linux, use `source django_rest/bin/activate` to activate the virtual environment.)
 
-### 3. Install Dependencies
-Install the required Python packages:
-```bash
-pip install -r requirements.txt
-```
-
----
 
 ## Running the Application
 
@@ -51,7 +44,8 @@ pip install -r requirements.txt
 
 3. Access the API in your browser:
     - List all cars: [http://127.0.0.1:8000/car/list](http://127.0.0.1:8000/car/list)
-    - View a specific car (replace `{primary_key}` with the ID of the car):  
+    - Add a new car: [http://127.0.0.1:8000/car/list](http://127.0.0.1:8000/car/list) (POST)
+    - View, update, or delete a specific car (replace `{primary_key}` with the ID of the car):
       [http://127.0.0.1:8000/car/{primary_key}](http://127.0.0.1:8000/car/{primary_key})
 
 ---
@@ -61,8 +55,30 @@ pip install -r requirements.txt
 - **GET /car/list**  
   Retrieves a list of all cars.
 
+- **POST /car/list**  
+  Adds a new car. Requires the following fields:
+  - `name` (string)
+  - `description` (string)
+  - `price` (integer, must be greater than 20000)
+  - `car_number` (string, must be alphanumeric)
+
 - **GET /car/{primary_key}**  
   Retrieves details of a specific car by its primary key.
+
+- **PUT /car/{primary_key}**  
+  Updates details of a specific car. Requires all fields as in the POST request.
+
+- **DELETE /car/{primary_key}**  
+  Deletes a specific car by its primary key.
+
+---
+
+## Validation Rules
+
+The following validations are applied to the car model:
+1. **Price**: Must be greater than 20000.
+2. **Car Number**: Must be alphanumeric.
+3. **Name and Description**: Cannot be the same.
 
 ---
 
@@ -77,17 +93,6 @@ pip install -r requirements.txt
 2. Add the app to the `INSTALLED_APPS` in `settings.py`.
 
 3. Use DRF's serializers, views, and routers to define new API endpoints.
-
-### Example of Adding a Serializer:
-```python
-from rest_framework import serializers
-from .models import Car
-
-class CarSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Car
-        fields = '__all__'
-```
 
 ---
 
@@ -112,11 +117,5 @@ INSTALLED_APPS = [
     'rest_framework',
 ]
 ```
-
----
-
-## Contributing
-
-Feel free to fork the repository and create a pull request for any new features or bug fixes.
 
 ---
