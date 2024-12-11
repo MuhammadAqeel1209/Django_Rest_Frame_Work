@@ -5,6 +5,7 @@ from .models import CarList
 from .api_file.serialization import CarSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework import status
 
 # Create your views here.
 # def car_list(request):
@@ -29,15 +30,44 @@ from rest_framework.decorators import api_view
 
 # Rest Frame Work
 
-@api_view(['GET'])
+@api_view(['GET','POST'])
 def car_list(request):
-    car_list = CarList.objects.all()
-    serializer = CarSerializer(car_list, many=True)
-    return Response(serializer.data)
+    if request.method == 'GET':
+        car_list = CarList.objects.all()
+        serializer = CarSerializer(car_list, many=True)
+        return Response(serializer.data)
+    
+    if request.method == 'POST':
+        serilize = CarSerializer(data = request.data)
+        if serilize.is_valid():
+            serilize.save()
+            return Response(serilize.data, status=201)
+        else:
+            return Response(serilize.errors, status=400)
 
-@api_view()
-def car_detail(request,pk):
-    car = CarList.objects.get(pk=pk)
-    serializer = CarSerializer(car)
-    return Response(serializer.data)
-        
+@api_view(['GET','PUT','DELETE'])
+def car_detail(request, pk):
+    try:
+        # Retrieve the car object, or raise a 404 error if not found
+        car = CarList.objects.get(pk=pk)
+    except CarList.DoesNotExist:
+        return Response({"error": "Car not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        # Handle GET request
+        serializer = CarSerializer(car)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        # Handle PUT request
+        serializer = CarSerializer(car, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        # Handle DELETE request
+        car.delete()
+        return Response({"message": "Car deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
