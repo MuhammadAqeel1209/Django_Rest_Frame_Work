@@ -1,3 +1,7 @@
+To add nested serializer information to the README and make the links more organized, here's the updated version:
+
+---
+
 # Django Rest Framework - Car Management API
 
 This is a Django Rest Framework (DRF) project that provides an API to manage a list of cars. The API allows you to view, add, update, or delete car details.
@@ -64,89 +68,96 @@ python manage.py migrate
 
 ---
 
+## Models
+
+### Car Model
+- **File**: [`models.py`](#models)  
+- **Key Features**: Represents individual cars, including name, description, price, and unique car number.
+
+### Showroom Model
+- **File**: [`models.py`](#models)  
+- **Key Features**: Represents a showroom with multiple cars in its collection.
+
+---
+
+## Serializers
+
+- **File**: [`serializers.py`](#serializers)
+- **Custom Serializer**: The `CarSerializer` includes a dynamically computed field:
+  - **`discount_price`**: Calculates the discounted price dynamically in API responses.
+  - **Validation**: Includes custom validation for fields like price, car name, and car description.
+
+### Nested Serializer Example
+To link cars to showrooms, you can use a nested serializer:
+
+```python
+from rest_framework import serializers
+from .models import CarList, ShowRoom
+
+class CarSerializer(serializers.ModelSerializer):
+    discount_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CarList
+        fields = "__all__"
+
+    def get_discount_price(self, obj):
+        return obj.price - 5000  # Apply a discount of 5000
+
+    def validate_price(self, value):
+        if value <= 20000.00:
+            raise serializers.ValidationError("Price must be more than 20,000.")
+        return value
+
+    def validate(self, data):
+        if data["car_name"] == data["car_decstr"]:
+            raise serializers.ValidationError("Car name and description cannot be the same.")
+        return data
+
+
+class ShowroomSerializer(serializers.ModelSerializer):
+    cars = CarSerializer(many=True)
+
+    class Meta:
+        model = ShowRoom
+        fields = "__all__"
+```
+
+For more details on the `ShowroomSerializer` with nested `CarSerializer`, refer to the **Custom Serializer** section in [`serializers.py`](#serializers).
+
+---
+
+## Class-Based Views (CBVs)
+
+- **File**: [`views.py`](#views)  
+- **Overview**: The project uses Django Rest Framework’s Class-Based Views (CBVs) to handle CRUD operations for cars and showrooms.
+
+### Key Views:
+1. **CarListView**: For listing and creating cars.
+2. **CarDetailView**: For retrieving, updating, and deleting cars.
+3. **ShowroomListView**: For listing and creating showrooms.
+4. **ShowroomDetailView**: For retrieving, updating, and deleting showrooms.
+
+Directly access the detailed implementation in the [`views.py`](#views) file.
+
+---
+
 ## API Endpoints
 
-- **GET /car/list**  
-  Retrieves a list of all cars.
+- **Cars**:
+  - [List/Create Cars](http://127.0.0.1:8000/car/list)
+  - [Retrieve/Update/Delete Car](http://127.0.0.1:8000/car/{pk})
 
-- **POST /car/list**  
-  Adds a new car. Requires the following fields:
-  - `car_name` (string)
-  - `car_decstr` (string)
-  - `price` (decimal, must be greater than 20000)
-  - `car_number` (string, must be alphanumeric)
-
-- **GET /car/{primary_key}**  
-  Retrieves details of a specific car by its primary key.
-
-- **PUT /car/{primary_key}**  
-  Updates details of a specific car. Requires all fields as in the POST request.
-
-- **DELETE /car/{primary_key}**  
-  Deletes a specific car by its primary key.
+- **Showrooms**:
+  - [List/Create Showrooms](http://127.0.0.1:8000/car/showroom)
+  - [Retrieve/Update/Delete Showroom](http://127.0.0.1:8000/car/showroom/{pk})
 
 ---
 
-## Validation Rules
+## Explore More
 
-The following validations are applied to the car model:
-1. **Price**: Must be greater than 20000.
-2. **Car Number**: Must be alphanumeric.
-3. **Name and Description**: Cannot be the same.
-
----
-
-## Custom Serialization
-
-This project includes a **custom serializer** to calculate and provide additional fields dynamically in the API response. 
-
-### Example: `discount_price`
-The `CarSerializer` includes a `discount_price` field that dynamically calculates a discounted price for a car.
-
-### Adding a Custom Field to a Serializer
-To add a custom field:
-1. Use `serializers.SerializerMethodField()` in your serializer.
-2. Define a method prefixed with `get_` followed by the field name. The method receives the model instance and returns the calculated value.
-
-For more details, refer to the [DRF Fields Documentation](https://www.django-rest-framework.org/api-guide/fields/).
-
----
-
-## Development
-
-### Adding New Features
-1. Create a new Django app:
-    ```bash
-    python manage.py startapp <app_name>
-    ```
-
-2. Add the app to the `INSTALLED_APPS` in `settings.py`.
-
-3. Use DRF's serializers, views, and routers to define new API endpoints.
-
----
-
-## Using Django Rest Framework (DRF)
-
-### Key Features of DRF Used in This Project:
-- **Serializers**: Convert querysets and model instances into JSON and vice versa.
-- **Custom Validation**: Validate data at both the field level and the object level.
-- **Generic Views**: Simplify creating CRUD operations.
-- **URL Routers**: Automatically generate URLs for API endpoints.
-- **Browsable API**: A web interface for interacting with the API.
-
-### DRF Installation
-If Django Rest Framework is not already installed, you can install it using pip:
-```bash
-pip install djangorestframework
-```
-
-Add `'rest_framework'` to the `INSTALLED_APPS` in `settings.py`:
-```python
-INSTALLED_APPS = [
-    ...
-    'rest_framework',
-]
-```
-
----
+### Learn More about DRF Concepts:
+- [Class-Based Views Documentation](https://www.django-rest-framework.org/api-guide/generic-views/)
+- [Custom Serializers Documentation](https://www.django-rest-framework.org/api-guide/serializers/#serializer-fields)
+- ['RelationShip in Django'](https://docs.djangoproject.com/en/5.1/topics/db/examples/)
+- ['Serizlizer RealtionShip'](https://www.django-rest-framework.org/api-guide/relations/)

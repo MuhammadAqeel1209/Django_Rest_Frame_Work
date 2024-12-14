@@ -1,45 +1,52 @@
 from rest_framework import serializers
-from ..models import CarList
-
-# Validators
-def alphanumeric(value):
-    if not value.isalnum():
-        raise serializers.ValidationError("Car number should be alphanumeric.")
-    return value
+from ..models import CarList, ShowRoom,Reivew
 
 
-# Model Serilizer make the table automatic by using that method 
+class ReiviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reivew
+        fields = "__all__"  # Include all fields from the Reivew model
 class CarSerializer(serializers.ModelSerializer):
-    
     # Custom Serializer 
     discount_price = serializers.SerializerMethodField()
+
+    reiviews = ReiviewSerializer(many=True,read_only=True)
     class Meta:
         model = CarList
-        fields = "__all__" # Want when all columns are available
-        # fields = ["id",'car_name','car_decstr']   # Want When Specific Column
-        # exclude =['car_name']
-        
-    def get_discount_price(self,object):
-        discount = object.price - 5000  # 10% discount on price
+        fields = "__all__"  # Include all fields from the CarList model
+
+    def get_discount_price(self, obj):
+        if obj.price is None:
+            return None  # Handle None price gracefully
+        discount = obj.price - 5000  # Fixed discount of 5000
         return discount
-        
-        
-    # Object Validation
-    # Validate for Specific Columns
+
+    # Validate price for specific conditions
     def validate_price(self, value):
         if value <= 20000.00:
             raise serializers.ValidationError("Price must be more than 20,000.")
         return value
 
-    # Object Validation
+    # Object-level validation
     def validate(self, data):
         if data["car_name"] == data["car_decstr"]:
             raise serializers.ValidationError(
                 "Car name and description cannot be the same."
             )
         return data
-    
-    
+
+class ShowroomSerializer(serializers.ModelSerializer):
+    # showrooms = CarSerializer(many=True,read_only=True)
+    # showrooms = serializers.StringRelatedField(many=True)
+    # showrooms =serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    showrooms = serializers.HyperlinkedRelatedField(
+        many=True,
+        read_only=True,
+        view_name='car_detail'
+    )
+    class Meta:
+        model = ShowRoom
+        fields = "__all__" 
 
 
 
