@@ -10,14 +10,21 @@ def alphanumeric(value):
 
 # Model Serilizer make the table automatic by using that method 
 class CarSerializer(serializers.ModelSerializer):
+    
+    # Custom Serializer 
+    discount_price = serializers.SerializerMethodField()
     class Meta:
         model = CarList
         fields = "__all__" # Want when all columns are available
         # fields = ["id",'car_name','car_decstr']   # Want When Specific Column
         # exclude =['car_name']
         
+    def get_discount_price(self,object):
+        discount = object.price - 5000  # 10% discount on price
+        return discount
         
-          
+        
+    # Object Validation
     # Validate for Specific Columns
     def validate_price(self, value):
         if value <= 20000.00:
