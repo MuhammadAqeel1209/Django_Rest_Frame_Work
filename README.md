@@ -1,5 +1,3 @@
-To add nested serializer information to the README and make the links more organized, here's the updated version:
-
 ---
 
 # Django Rest Framework - Car Management API
@@ -114,7 +112,6 @@ class CarSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Car name and description cannot be the same.")
         return data
 
-
 class ShowroomSerializer(serializers.ModelSerializer):
     cars = CarSerializer(many=True)
 
@@ -159,5 +156,30 @@ Directly access the detailed implementation in the [`views.py`](#views) file.
 ### Learn More about DRF Concepts:
 - [Class-Based Views Documentation](https://www.django-rest-framework.org/api-guide/generic-views/)
 - [Custom Serializers Documentation](https://www.django-rest-framework.org/api-guide/serializers/#serializer-fields)
-- ['RelationShip in Django'](https://docs.djangoproject.com/en/5.1/topics/db/examples/)
-- ['Serizlizer RealtionShip'](https://www.django-rest-framework.org/api-guide/relations/)
+- [RelationShip in Django](https://docs.djangoproject.com/en/5.1/topics/db/examples/)
+- [Serizlizer RealtionShip](https://www.django-rest-framework.org/api-guide/relations/)
+
+
+---
+
+## Difference Between Authentication and Permission
+
+In Django Rest Framework (DRF), **authentication** and **permissions** serve distinct purposes in securing an API:
+
+| **Aspect**         | **Authentication**                                               | **Permission**                                                 |
+|---------------------|------------------------------------------------------------------|----------------------------------------------------------------|
+| **Purpose**         | Confirms the identity of the user making the request.           | Determines what the authenticated user is allowed to do.      |
+| **Scope**           | Deals with **who** is making the request (e.g., user login).    | Deals with **what** the user is allowed to access or modify.  |
+| **Implemented By**  | **Authentication classes** in DRF (`settings.py > DEFAULT_AUTHENTICATION_CLASSES`). | **Permission classes** in DRF (`settings.py > DEFAULT_PERMISSION_CLASSES`). |
+| **Examples**        | Token-based, Session-based, or JWT-based authentication.        | Role-based access, object-level permissions, or custom rules. |
+| **Configuration**   | Used to enforce user login or session validation.               | Used to restrict access to specific views or actions.         |
+| **Key Methods**     | `authenticate(self, request)` in custom authentication classes. | `has_permission(self, request, view)` and `has_object_permission(self, request, view, obj)` in permission classes. |
+
+### Key Points to Remember
+- **Authentication** answers the question: *Who is this user?*  
+- **Permission** answers the question: *Is this user allowed to do this action?*  
+
+For more details, refer to:
+- [Authentication in Django Rest Framework](https://www.django-rest-framework.org/api-guide/authentication/)
+- [Permissions in Django Rest Framework](https://www.django-rest-framework.org/api-guide/permissions/)
+

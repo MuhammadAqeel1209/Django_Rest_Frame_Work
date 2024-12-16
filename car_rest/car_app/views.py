@@ -6,9 +6,19 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.authentication import BasicAuthentication,SessionAuthentication
+from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser
 
 # Class Based View
 class show_rooms(APIView):
+    
+    # authentication_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [SessionAuthentication]
+    # permission_classes = [AllowAny]
+    # permission_classes = [IsAdminUser]
+    
+    
     def get(self, request):
         showrooms = ShowRoom.objects.all()
         serializer = ShowroomSerializer(showrooms, many=True,context={'request': request})
