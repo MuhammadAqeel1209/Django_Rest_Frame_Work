@@ -1,85 +1,134 @@
-from .models import CarList,ShowRoom
+from .models import CarList, ShowRoom, Reivew
+
 # from django.http import JsonResponse,HttpResponse
 # import json
-from .api_file.serialization import CarSerializer,ShowroomSerializer
+from .api_file.serialization import CarSerializer, ShowroomSerializer, ReiviewSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework import generics, mixins
 from rest_framework.authentication import BasicAuthentication,SessionAuthentication
-from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser
+from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser,DjangoModelPermissions
+
+# ConcreteViewClasses
+class ReiviewList(generics.ListCreateAPIView):
+    queryset = Reivew.objects.all()
+    serializer_class = ReiviewSerializer
+    
+class ReiviewDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Reivew.objects.all()
+    serializer_class = ReiviewSerializer
+
+
+# Generic and Mixin
+
+# class ReiviewDetail(mixins.RetrieveModelMixin,generics.GenericAPIView):
+#     queryset = Reivew.objects.all()
+#     serializer_class = ReiviewSerializer
+    
+#     def get(self, request, *args, **kwargs):
+#         return self.retrieve(request, *args, **kwargs)
+    
+
+# class ReiviewList(
+#     mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView
+# ):
+#     queryset = Reivew.objects.all()
+#     serializer_class = ReiviewSerializer
+#     authentication_classes=[SessionAuthentication]
+#     permission_classes=[DjangoModelPermissions]
+    
+#     def get(self,request, *args, **kwargs):
+#         return self.list(request, *args, **kwargs)
+    
+#     def post(self, request, *args, **kwargs):
+#         return self.create(request, *args, **kwargs)
+
 
 # Class Based View
 class show_rooms(APIView):
-    
+
     # authentication_classes = [BasicAuthentication]
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [SessionAuthentication]
+    # permission_classes = [IsAuthenticated]
+    # authentication_classes = [SessionAuthentication]
     # permission_classes = [AllowAny]
     # permission_classes = [IsAdminUser]
-    
-    
+
     def get(self, request):
         showrooms = ShowRoom.objects.all()
-        serializer = ShowroomSerializer(showrooms, many=True,context={'request': request})
+        serializer = ShowroomSerializer(
+            showrooms, many=True, context={"request": request}
+        )
         return Response(serializer.data)
-    
+
     def post(self, request):
-        serilize = ShowroomSerializer(data = request.data)
+        serilize = ShowroomSerializer(data=request.data)
         if serilize.is_valid():
             serilize.save()
             return Response(serilize.data, status=status.HTTP_200_OK)
         else:
             return Response(serilize.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class showRoom_details(APIView):
     def get(self, request, pk):
         try:
             showroom = ShowRoom.objects.get(pk=pk)
         except ShowRoom.DoesNotExist:
-            return Response({"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
         serilizer = ShowroomSerializer(showroom)
         return Response(serilizer.data)
-    
+
     def put(self, request, pk):
         try:
             showroom = ShowRoom.objects.get(pk=pk)
-            serializer = ShowroomSerializer(showroom,data=request.data)
+            serializer = ShowroomSerializer(showroom, data=request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ShowRoom.DoesNotExist:
-            return Response({"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
     def delete(self, request, pk):
         try:
             showroom = ShowRoom.objects.get(pk=pk)
             showroom.delete()
-            return Response({"message": "Showroom deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {"message": "Showroom deleted successfully"},
+                status=status.HTTP_204_NO_CONTENT,
+            )
         except ShowRoom.DoesNotExist:
-            return Response({"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 # Rest Frame Work
-@api_view(['GET','POST'])
+@api_view(["GET", "POST"])
 def car_list(request):
-    if request.method == 'GET':
+    if request.method == "GET":
         car_list = CarList.objects.all()
         serializer = CarSerializer(car_list, many=True)
         return Response(serializer.data)
-    
-    if request.method == 'POST':
-        serilize = CarSerializer(data = request.data)
+
+    if request.method == "POST":
+        serilize = CarSerializer(data=request.data)
         if serilize.is_valid():
             serilize.save()
             return Response(serilize.data, status=201)
         else:
             return Response(serilize.errors, status=400)
 
-@api_view(['GET','PUT','DELETE'])
+
+@api_view(["GET", "PUT", "DELETE"])
 def car_detail(request, pk):
     try:
         # Retrieve the car object, or raise a 404 error if not found
@@ -87,12 +136,12 @@ def car_detail(request, pk):
     except CarList.DoesNotExist:
         return Response({"error": "Car not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == 'GET':
+    if request.method == "GET":
         # Handle GET request
         serializer = CarSerializer(car)
         return Response(serializer.data)
 
-    elif request.method == 'PUT':
+    elif request.method == "PUT":
         # Handle PUT request
         serializer = CarSerializer(car, data=request.data)
         if serializer.is_valid():
@@ -101,14 +150,12 @@ def car_detail(request, pk):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
+    elif request.method == "DELETE":
         # Handle DELETE request
         car.delete()
-        return Response({"message": "Car deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-
-
-
+        return Response(
+            {"message": "Car deleted successfully"}, status=status.HTTP_204_NO_CONTENT
+        )
 
 
 # Create your views here.
@@ -130,4 +177,3 @@ def car_detail(request, pk):
 #         'car_active' : car_id.active
 #     }
 #     return JsonResponse(data)
-
