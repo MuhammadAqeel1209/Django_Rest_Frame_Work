@@ -14,44 +14,59 @@ from rest_framework import generics, mixins
 from rest_framework import viewsets
 
 # ConcreteViewClasses
-class ReiviewList(generics.ListCreateAPIView):
-    queryset = Reivew.objects.all()
+class ReiviewCreate(generics.CreateAPIView):
     serializer_class = ReiviewSerializer
+    def perform_create(self, serializer):
+        pk = self.kwargs.get('pk')
+        car = get_object_or_404(CarList, pk=pk)
+        serializer.save(car=car)
+
+class ReiviewList(generics.ListAPIView):
+    # queryset = Reivew.objects.all()
+    serializer_class = ReiviewSerializer
+    def get_queryset(self):
+        pk = self.kwargs['pk']
+        return Reivew.objects.filter(car=pk)
     
 class ReiviewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Reivew.objects.all()
     serializer_class = ReiviewSerializer
 
 
+# Model ViewSet 
+class ShowRoom_viewSet(viewsets.ModelViewSet):
+    queryset = ShowRoom.objects.all()
+    serializer_class = ShowroomSerializer
 
-# ViewSet 
-class ShowRoom_viewSet(viewsets.ViewSet):
-    def list(self,request):
-        queryset  = ShowRoom.objects.all()
-        serializer = ShowroomSerializer(
-            queryset, many=True, context={"request": request}
-        )
-        return Response(serializer.data)
+
+# # ViewSet 
+# class ShowRoom_viewSet(viewsets.ViewSet):
+#     def list(self,request):
+#         queryset  = ShowRoom.objects.all()
+#         serializer = ShowroomSerializer(
+#             queryset, many=True, context={"request": request}
+#         )
+#         return Response(serializer.data)
     
-    def retrieve(self, request,pk):
-        queryset  = ShowRoom.objects.all()
-        data = get_object_or_404(queryset ,pk=pk)
-        serializer = ShowroomSerializer(data,context={"request": request})
-        return Response(serializer.data)
+#     def retrieve(self, request,pk):
+#         queryset  = ShowRoom.objects.all()
+#         data = get_object_or_404(queryset ,pk=pk)
+#         serializer = ShowroomSerializer(data,context={"request": request})
+#         return Response(serializer.data)
     
-    def create(self,request):
-        serializer = ShowroomSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=201)
-        else:
-            return Response(serializer.errors, status=400)
+#     def create(self,request):
+#         serializer = ShowroomSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=201)
+#         else:
+#             return Response(serializer.errors, status=400)
             
     
 
 
 
-# Rest Frame Work
+# Rest Frame Work 1st Start of Rest Frame Work
 @api_view(["GET", "POST"])
 def car_list(request):
     if request.method == "GET":
@@ -190,6 +205,8 @@ def car_detail(request, pk):
     
 #     def post(self, request, *args, **kwargs):
 #         return self.create(request, *args, **kwargs)
+
+
 
 # Create your views here.
 # def car_list(request):

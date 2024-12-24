@@ -13,6 +13,9 @@ urlpatterns = [
 
     # path("showroom",views.show_rooms.as_view(), name='showroom'),
     # path("showroom/<int:pk>", views.showRoom_details.as_view(), name='showroom_details'),
-    path('reiview',views.ReiviewList.as_view(), name='reiview'),
-    path('reiview/<int:pk>',views.ReiviewDetail.as_view(), name='reiviewDetail'),
+    # path('reiview',views.ReiviewList.as_view(), name='reiview'),
+    # path('reiview/<int:pk>',views.ReiviewDetail.as_view(), name='reiviewDetail'),
+    path('showroom/<int:pk>/reiview.create',views.ReiviewCreate.as_view(), name='reiviewCreate'),
+    path('showroom/<int:pk>/reiview',views.ReiviewList.as_view(), name='reiviewList'),
+    path('showroom/reiview/<int:pk>',views.ReiviewDetail.as_view(), name='reiviewDelete'),
 ]

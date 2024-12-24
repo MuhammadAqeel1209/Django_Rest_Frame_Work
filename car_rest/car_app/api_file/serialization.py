@@ -5,7 +5,8 @@ from ..models import CarList, ShowRoom,Reivew
 class ReiviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reivew
-        fields = "__all__"  # Include all fields from the Reivew model
+        exclude =('car',)
+        # fields = "__all__"  # Include all fields from the Reivew model
 class CarSerializer(serializers.ModelSerializer):
     # Custom Serializer 
     discount_price = serializers.SerializerMethodField()
