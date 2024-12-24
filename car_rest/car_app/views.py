@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from .models import CarList, ShowRoom, Reivew
 
 # from django.http import JsonResponse,HttpResponse
@@ -8,8 +9,9 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import generics, mixins
-from rest_framework.authentication import BasicAuthentication,SessionAuthentication
-from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser,DjangoModelPermissions
+# from rest_framework.authentication import BasicAuthentication,SessionAuthentication
+# from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser,DjangoModelPermissions
+from rest_framework import viewsets
 
 # ConcreteViewClasses
 class ReiviewList(generics.ListCreateAPIView):
@@ -21,94 +23,32 @@ class ReiviewDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ReiviewSerializer
 
 
-# Generic and Mixin
 
-# class ReiviewDetail(mixins.RetrieveModelMixin,generics.GenericAPIView):
-#     queryset = Reivew.objects.all()
-#     serializer_class = ReiviewSerializer
-    
-#     def get(self, request, *args, **kwargs):
-#         return self.retrieve(request, *args, **kwargs)
-    
-
-# class ReiviewList(
-#     mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView
-# ):
-#     queryset = Reivew.objects.all()
-#     serializer_class = ReiviewSerializer
-#     authentication_classes=[SessionAuthentication]
-#     permission_classes=[DjangoModelPermissions]
-    
-#     def get(self,request, *args, **kwargs):
-#         return self.list(request, *args, **kwargs)
-    
-#     def post(self, request, *args, **kwargs):
-#         return self.create(request, *args, **kwargs)
-
-
-# Class Based View
-class show_rooms(APIView):
-
-    # authentication_classes = [BasicAuthentication]
-    # permission_classes = [IsAuthenticated]
-    # authentication_classes = [SessionAuthentication]
-    # permission_classes = [AllowAny]
-    # permission_classes = [IsAdminUser]
-
-    def get(self, request):
-        showrooms = ShowRoom.objects.all()
+# ViewSet 
+class ShowRoom_viewSet(viewsets.ViewSet):
+    def list(self,request):
+        queryset  = ShowRoom.objects.all()
         serializer = ShowroomSerializer(
-            showrooms, many=True, context={"request": request}
+            queryset, many=True, context={"request": request}
         )
         return Response(serializer.data)
-
-    def post(self, request):
-        serilize = ShowroomSerializer(data=request.data)
-        if serilize.is_valid():
-            serilize.save()
-            return Response(serilize.data, status=status.HTTP_200_OK)
+    
+    def retrieve(self, request,pk):
+        queryset  = ShowRoom.objects.all()
+        data = get_object_or_404(queryset ,pk=pk)
+        serializer = ShowroomSerializer(data,context={"request": request})
+        return Response(serializer.data)
+    
+    def create(self,request):
+        serializer = ShowroomSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
         else:
-            return Response(serilize.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=400)
+            
+    
 
-
-class showRoom_details(APIView):
-    def get(self, request, pk):
-        try:
-            showroom = ShowRoom.objects.get(pk=pk)
-        except ShowRoom.DoesNotExist:
-            return Response(
-                {"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        serilizer = ShowroomSerializer(showroom)
-        return Response(serilizer.data)
-
-    def put(self, request, pk):
-        try:
-            showroom = ShowRoom.objects.get(pk=pk)
-            serializer = ShowroomSerializer(showroom, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except ShowRoom.DoesNotExist:
-            return Response(
-                {"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-    def delete(self, request, pk):
-        try:
-            showroom = ShowRoom.objects.get(pk=pk)
-            showroom.delete()
-            return Response(
-                {"message": "Showroom deleted successfully"},
-                status=status.HTTP_204_NO_CONTENT,
-            )
-        except ShowRoom.DoesNotExist:
-            return Response(
-                {"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND
-            )
 
 
 # Rest Frame Work
@@ -157,6 +97,99 @@ def car_detail(request, pk):
             {"message": "Car deleted successfully"}, status=status.HTTP_204_NO_CONTENT
         )
 
+
+
+
+# Class Based View
+# class show_rooms(APIView):
+
+#     # authentication_classes = [BasicAuthentication]
+#     # permission_classes = [IsAuthenticated]
+#     # authentication_classes = [SessionAuthentication]
+#     # permission_classes = [AllowAny]
+#     # permission_classes = [IsAdminUser]
+
+#     def get(self, request):
+#         showrooms = ShowRoom.objects.all()
+#         serializer = ShowroomSerializer(
+#             showrooms, many=True, context={"request": request}
+#         )
+#         return Response(serializer.data)
+
+#     def post(self, request):
+#         serilize = ShowroomSerializer(data=request.data)
+#         if serilize.is_valid():
+#             serilize.save()
+#             return Response(serilize.data, status=status.HTTP_200_OK)
+#         else:
+#             return Response(serilize.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class showRoom_details(APIView):
+#     def get(self, request, pk):
+#         try:
+#             showroom = ShowRoom.objects.get(pk=pk)
+#         except ShowRoom.DoesNotExist:
+#             return Response(
+#                 {"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND
+#             )
+
+#         serilizer = ShowroomSerializer(showroom)
+#         return Response(serilizer.data)
+
+#     def put(self, request, pk):
+#         try:
+#             showroom = ShowRoom.objects.get(pk=pk)
+#             serializer = ShowroomSerializer(showroom, data=request.data)
+#             if serializer.is_valid():
+#                 serializer.save()
+#                 return Response(serializer.data)
+#             else:
+#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         except ShowRoom.DoesNotExist:
+#             return Response(
+#                 {"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND
+#             )
+
+#     def delete(self, request, pk):
+#         try:
+#             showroom = ShowRoom.objects.get(pk=pk)
+#             showroom.delete()
+#             return Response(
+#                 {"message": "Showroom deleted successfully"},
+#                 status=status.HTTP_204_NO_CONTENT,
+#             )
+#         except ShowRoom.DoesNotExist:
+#             return Response(
+#                 {"error": "Showroom not found"}, status=status.HTTP_404_NOT_FOUND
+#             )
+
+
+
+
+# Generic and Mixin
+
+# class ReiviewDetail(mixins.RetrieveModelMixin,generics.GenericAPIView):
+#     queryset = Reivew.objects.all()
+#     serializer_class = ReiviewSerializer
+    
+#     def get(self, request, *args, **kwargs):
+#         return self.retrieve(request, *args, **kwargs)
+    
+
+# class ReiviewList(
+#     mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView
+# ):
+#     queryset = Reivew.objects.all()
+#     serializer_class = ReiviewSerializer
+#     authentication_classes=[SessionAuthentication]
+#     permission_classes=[DjangoModelPermissions]
+    
+#     def get(self,request, *args, **kwargs):
+#         return self.list(request, *args, **kwargs)
+    
+#     def post(self, request, *args, **kwargs):
+#         return self.create(request, *args, **kwargs)
 
 # Create your views here.
 # def car_list(request):
