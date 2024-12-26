@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "car_app",
     "rest_framework",
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -133,3 +134,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 #         "rest_framework.permissions.IsAuthenticated",
 #     ],
 # }
+
+Rest_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}

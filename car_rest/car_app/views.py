@@ -4,11 +4,13 @@ from .models import CarList, ShowRoom, Reivew
 # from django.http import JsonResponse,HttpResponse
 # import json
 from .api_file.serialization import CarSerializer, ShowroomSerializer, ReiviewSerializer
+from .api_file.permissions import ReiviewReadUsers,PermissionForAdmin
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import generics, mixins
+from rest_framework.exceptions import ValidationError
 # from rest_framework.authentication import BasicAuthentication,SessionAuthentication
 # from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser,DjangoModelPermissions
 from rest_framework import viewsets
@@ -16,10 +18,18 @@ from rest_framework import viewsets
 # ConcreteViewClasses
 class ReiviewCreate(generics.CreateAPIView):
     serializer_class = ReiviewSerializer
+    
+    def get_queryset(self):
+        return Reivew.objects.all()
+    
     def perform_create(self, serializer):
         pk = self.kwargs.get('pk')
         car = get_object_or_404(CarList, pk=pk)
-        serializer.save(car=car)
+        user = self.request.user
+        review_queryset = Reivew.objects.filter(car=car, apiUser=user)
+        if review_queryset.exists():
+            raise ValidationError('You have already provided a review for this car.')
+        serializer.save(car=car, apiUser=user)
 
 class ReiviewList(generics.ListAPIView):
     # queryset = Reivew.objects.all()
@@ -31,6 +41,7 @@ class ReiviewList(generics.ListAPIView):
 class ReiviewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Reivew.objects.all()
     serializer_class = ReiviewSerializer
+    permission_classes = [PermissionForAdmin]
 
 
 # Model ViewSet 

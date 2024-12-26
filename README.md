@@ -1,3 +1,249 @@
+# Django Rest Framework - Car Management API
+
+This is a Django Rest Framework (DRF) project that provides an API to manage a list of cars. The API allows you to view, add, update, or delete car details.
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Python 3.8 or higher
+- Virtual Environment (optional but recommended)
+- Django and Django Rest Framework (DRF)
+
+---
+
+## Installation
+
+### 1. Clone the Repository
+```bash
+git clone <repository_url>
+cd <repository_folder>
+```
+
+### 2. Set Up Virtual Environment
+Create a virtual environment and activate it:
+```bash
+python -m venv django_rest
+django_rest\Scripts\activate
+```
+(For macOS/Linux, use `source django_rest/bin/activate` to activate the virtual environment.)
+
+### 3. Install Dependencies
+Install the required Python packages:
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Run Migrations
+Apply database migrations:
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+---
+
+## Running the Application
+
+1. Navigate to the project folder:
+    ```bash
+    cd car_rest
+    ```
+
+2. Run the server:
+    ```bash
+    python manage.py runserver
+    ```
+
+3. Access the API in your browser:
+    - List all cars: [http://127.0.0.1:8000/car/list](http://127.0.0.1:8000/car/list)
+    - Add a new car: [http://127.0.0.1:8000/car/list](http://127.0.0.1:8000/car/list) (POST)
+    - View, update, or delete a specific car (replace `{primary_key}` with the ID of the car):
+      [http://127.0.0.1:8000/car/{primary_key}](http://127.0.0.1:8000/car/{primary_key})
+
+---
+
+## Models
+
+### Car Model
+- **File**: [`models.py`](#models)  
+- **Key Features**: Represents individual cars, including name, description, price, and unique car number.
+
+### Showroom Model
+- **File**: [`models.py`](#models)  
+- **Key Features**: Represents a showroom with multiple cars in its collection.
+
+---
+
+## Serializers
+
+- **File**: [`serializers.py`](#serializers)
+- **Custom Serializer**: The `CarSerializer` includes a dynamically computed field:
+  - **`discount_price`**: Calculates the discounted price dynamically in API responses.
+  - **Validation**: Includes custom validation for fields like price, car name, and car description.
+
+### Nested Serializer Example
+To link cars to showrooms, you can use a nested serializer:
+
+```python
+from rest_framework import serializers
+from .models import CarList, ShowRoom
+
+class CarSerializer(serializers.ModelSerializer):
+    discount_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CarList
+        fields = "__all__"
+
+    def get_discount_price(self, obj):
+        return obj.price - 5000  # Apply a discount of 5000
+
+    def validate_price(self, value):
+        if value <= 20000.00:
+            raise serializers.ValidationError("Price must be more than 20,000.")
+        return value
+
+    def validate(self, data):
+        if data["car_name"] == data["car_decstr"]:
+            raise serializers.ValidationError("Car name and description cannot be the same.")
+        return data
+
+class ShowroomSerializer(serializers.ModelSerializer):
+    cars = CarSerializer(many=True)
+
+    class Meta:
+        model = ShowRoom
+        fields = "__all__"
+```
+
+For more details on the `ShowroomSerializer` with nested `CarSerializer`, refer to the **Custom Serializer** section in [`serializers.py`](#serializers).
+
+---
+
+## Class-Based Views (CBVs)
+
+- **File**: [`views.py`](#views)  
+- **Overview**: The project uses Django Rest Framework’s Class-Based Views (CBVs) to handle CRUD operations for cars and showrooms.
+
+### Key Views:
+1. **CarListView**: For listing and creating cars.
+2. **CarDetailView**: For retrieving, updating, and deleting cars.
+3. **ShowroomListView**: For listing and creating showrooms.
+4. **ShowroomDetailView**: For retrieving, updating, and deleting showrooms.
+
+Directly access the detailed implementation in the [`views.py`](#views) file.
+
+---
+
+## Mixins and Generic Views
+
+The project leverages Django Rest Framework's **mixins** and **generic views** to simplify code for common operations:
+
+### Mixins
+- `CreateModelMixin`: Provides a method for creating new instances.
+- `RetrieveModelMixin`: Provides a method for retrieving specific instances.
+- `UpdateModelMixin`: Provides a method for updating existing instances.
+- `DestroyModelMixin`: Provides a method for deleting instances.
+
+For more information, see the [Using Mixins](https://www.django-rest-framework.org/tutorial/3-class-based-views/#using-mixins) section of the DRF documentation.
+
+### Generic Views
+- `ListCreateAPIView`: Combines listing and creating resources.
+- `RetrieveUpdateDestroyAPIView`: Combines retrieval, updating, and deletion operations.
+
+For more information, see the [Generic Views](https://www.django-rest-framework.org/api-guide/generic-views/) section of the DRF documentation.
+
+**Example Implementation**:
+
+```python
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from .models import CarList
+from .serializers import CarSerializer
+
+class CarListView(ListCreateAPIView):
+    queryset = CarList.objects.all()
+    serializer_class = CarSerializer
+
+class CarDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = CarList.objects.all()
+    serializer_class = CarSerializer
+```
+
+These views reduce boilerplate code and make API endpoints more maintainable.
+
+---
+
+## Concrete View Classes
+
+Django Rest Framework provides **Concrete View Classes** to handle standard CRUD operations, further simplifying API development. These include:
+
+- **`CreateAPIView`**: For creating objects.
+- **`ListAPIView`**: For listing objects.
+- **`RetrieveAPIView`**: For retrieving a specific object.
+- **`DestroyAPIView`**: For deleting objects.
+- **`UpdateAPIView`**: For updating objects.
+
+### Example Usage
+
+```python
+from rest_framework.generics import CreateAPIView, ListAPIView
+from .models import CarList
+from .serializers import CarSerializer
+
+class CarCreateView(CreateAPIView):
+    queryset = CarList.objects.all()
+    serializer_class = CarSerializer
+
+class CarListView(ListAPIView):
+    queryset = CarList.objects.all()
+    serializer_class = CarSerializer
+```
+
+These concrete classes allow for fine-grained control and minimal configuration for specific tasks.
+
+---
+
+## API Endpoints
+
+- **Cars**:
+  - [List/Create Cars](http://127.0.0.1:8000/car/list)
+  - [Retrieve/Update/Delete Car](http://127.0.0.1:8000/car/{pk})
+
+- **Showrooms**:
+  - [List/Create Showrooms](http://127.0.0.1:8000/car/showroom)
+  - [Retrieve/Update/Delete Showroom](http://127.0.0.1:8000/car/showroom/{pk})
+
+- **Reviews**:
+  - [List/Create Reviews](http://127.0.0.1:8000/car/reiview)
+  - [Retrieve/Update/Delete Review](http://127.0.0.1:8000/car/reiview/{pk})
+
+---
+
+## Explore More
+
+### Learn More about DRF Concepts:
+- [Class-Based Views Documentation](https://www.django-rest-framework.org/api-guide/generic-views/)
+- [Custom Serializers Documentation](https://www.django-rest-framework.org/api-guide/serializers/#serializer-fields)
+- [Relationships in Django](https://docs.djangoproject.com/en/5.1/topics/db/examples/)
+- [Serializer Relationships](https://www.django-rest-framework.org/api-guide/relations/)
+
+---
+
+## Difference Between Authentication and Permission
+
+In Django Rest Framework (DRF), **authentication** and **permissions** serve distinct purposes in securing an API:
+
+| **Aspect**         | **Authentication**                                               | **Permission**                                                 |
+|---------------------|------------------------------------------------------------------|----------------------------------------------------------------|
+| **Purpose**         | Confirms the identity of the user making the request.           | Determines what the authenticated user is allowed to do.      |
+| **Scope**           | Deals with **who** is making the request (e.g., user login).    | Deals with **what** the user is allowed to access or modify.  |
+| **Implemented By**  | **Authentication classes** in DRF (`settings.py > DEFAULT_AUTHENTICATION_CLASSES`). | **Permission classes** in DRF (`settings.py > DEFAULT_PERMISSION_CLASSES`). |
+| **Examples**        | Token-based, Session-based, or JWT-based authentication.        | Role-based access, object-level permissions, or custom rules. |
+| **Configuration**   | Used to enforce user login or session validation.               | Used to restrict access to specific views or actions.         |
+| **Key Methods**     | `authenticate(self, request)` in custom authentication classes. | `has_permission(self, request, view)` and `has_object_permission(self, request, view, obj)` in permission classes. |
+
 To add `ModelViewSet` for your project, we will use Django Rest Framework's `ModelViewSet`, which combines the functionality of `ViewSet` and generic views. Here's how you can implement it for both `CarList` and `ShowRoom` models.
 
 ---
@@ -85,4 +331,225 @@ Using `ModelViewSet` will automatically provide these endpoints:
 2. Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to see the API root.
 3. Use tools like **Postman**, **cURL**, or the DRF web interface to test the endpoints.
 
+### **Custom Permissions in Django Rest Framework (DRF)**
+
+Custom permissions in Django Rest Framework (DRF) provide fine-grained control over API access. They allow developers to define specific rules for who can perform certain actions, beyond the default permission classes provided by DRF.
+
 ---
+
+### **How Custom Permissions Work**
+
+Custom permissions are implemented by subclassing `BasePermission` from `rest_framework.permissions`. A custom permission class typically overrides one or both of these methods:
+
+1. **`has_permission(self, request, view)`**  
+   This method checks if the user has general access to a view. It’s called once per request, before any view-specific object-level checks.
+
+2. **`has_object_permission(self, request, view, obj)`**  
+   This method checks permissions for a specific object. It’s called during requests that act on a single object, like `GET`, `PUT`, or `DELETE` for a specific resource.
+
+---
+
+### **Example: Custom Permission**
+
+#### **IsAdminOrReadOnly**
+This permission allows read-only access for everyone but restricts write operations to admin users.
+
+```python
+from rest_framework.permissions import BasePermission, SAFE_METHODS
+
+class IsAdminOrReadOnly(BasePermission):
+    """
+    Custom permission to allow only admins to edit objects.
+    Others can only read the data.
+    """
+
+    def has_permission(self, request, view):
+        # SAFE_METHODS includes GET, HEAD, and OPTIONS
+        if request.method in SAFE_METHODS:
+            return True  # Allow read-only access for all users
+
+        # Write permissions are only allowed for admin users
+        return request.user and request.user.is_staff
+```
+
+---
+
+### **How to Use Custom Permissions**
+
+1. Define the custom permission class in your project.
+2. Attach the custom permission to a view or a viewset by setting the `permission_classes` attribute.
+
+#### Example Usage:
+```python
+from rest_framework.viewsets import ModelViewSet
+from .models import CarList
+from .serializers import CarSerializer
+from .permissions import IsAdminOrReadOnly
+
+class CarModelViewSet(ModelViewSet):
+    """
+    A ModelViewSet for managing CarList objects with custom permissions.
+    """
+    queryset = CarList.objects.all()
+    serializer_class = CarSerializer
+    permission_classes = [IsAdminOrReadOnly]
+```
+
+---
+
+### **When to Use Custom Permissions**
+
+- **Read-Only APIs for Public Users:** Allow unrestricted access to view data but limit modifications to authenticated or privileged users.
+- **Role-Based Access Control (RBAC):** Differentiate permissions based on user roles (e.g., admin, editor, viewer).
+- **Object-Level Restrictions:** Control access to specific objects, such as ensuring users can only edit their own data.
+
+---
+
+### **Advantages of Custom Permissions**
+
+- **Granularity:** Fine-tuned control over API access.
+- **Reusability:** Once defined, custom permissions can be reused across multiple views or viewsets.
+- **Security:** Ensures sensitive operations are restricted to authorized users.
+
+By implementing custom permissions, you can make your API secure, robust, and tailored to specific access requirements.
+
+### **Token Authentication in Django Rest Framework (DRF)**
+
+Token-based authentication is a mechanism for securing APIs in Django Rest Framework (DRF). It uses tokens to validate the identity of users. A token is a unique string generated for a user upon successful login, which is sent with subsequent requests to authenticate the user.
+
+---
+
+### **How Token Authentication Works**
+
+1. **User Authentication**: The user provides valid credentials (e.g., username and password).
+2. **Token Generation**: Upon successful login, the server generates a token and sends it to the client.
+3. **Token Usage**: The client includes the token in the `Authorization` header of subsequent API requests.
+4. **Token Validation**: The server validates the token and identifies the user.
+
+---
+
+### **Setup Token Authentication in DRF**
+
+#### **1. Install DRF If Not Installed**
+Ensure that Django Rest Framework is installed in your environment:
+```bash
+pip install djangorestframework
+```
+
+#### **2. Add DRF to Installed Apps**
+Include `'rest_framework'` and `'rest_framework.authtoken'` in your `INSTALLED_APPS`:
+```python
+INSTALLED_APPS = [
+    ...,
+    'rest_framework',
+    'rest_framework.authtoken',
+]
+```
+
+#### **3. Migrate Database**
+Run migrations to create the necessary database table for storing tokens:
+```bash
+python manage.py migrate
+```
+
+#### **4. Generate Tokens for Users**
+You can create tokens manually for users or generate them programmatically:
+```bash
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import User
+
+# Generate a token for an existing user
+user = User.objects.get(username='username')
+token, created = Token.objects.get_or_create(user=user)
+print(token.key)  # Print the token key
+```
+
+---
+
+### **5. Update Settings for Token Authentication**
+Configure DRF to use token authentication in your `settings.py` file:
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+```
+
+---
+
+### **6. Create a Token Authentication Endpoint**
+
+To allow users to obtain tokens via an API, use the built-in `obtain_auth_token` view:
+
+#### **urls.py**
+```python
+from django.urls import path
+from rest_framework.authtoken.views import obtain_auth_token
+
+urlpatterns = [
+    path('api/token/', obtain_auth_token, name='api_token_auth'),
+]
+```
+
+---
+
+### **7. Usage in API Requests**
+
+Clients must include the token in the `Authorization` header of each API request:
+
+#### Example:
+```http
+GET /api/cars/ HTTP/1.1
+Host: example.com
+Authorization: Token <your_token_here>
+```
+
+---
+
+### **8. Protecting API Endpoints**
+
+Apply `IsAuthenticated` or other permissions to secure endpoints:
+
+#### Example View:
+```python
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
+class ProtectedView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({"message": "You are authenticated!"})
+```
+
+---
+
+### **Testing Token Authentication**
+
+1. **Obtain a Token**: Use the `/api/token/` endpoint with valid credentials to get a token.
+2. **Use the Token**: Include the token in the `Authorization` header of subsequent API requests.
+3. **Test Secure Endpoints**: Verify that endpoints protected with `IsAuthenticated` are accessible only with a valid token.
+
+---
+
+### **Advantages of Token Authentication**
+
+1. **Stateless**: No session data is stored on the server, making it scalable.
+2. **Reusability**: The same token can be reused for multiple requests.
+3. **Decoupled Frontend**: Works seamlessly with SPAs and mobile apps.
+
+---
+
+### **Considerations**
+
+- **Token Expiry**: Tokens do not expire by default. Consider using packages like `django-rest-framework-simplejwt` if you need expiration and refresh functionality.
+- **Secure Storage**: Tokens should be stored securely on the client side (e.g., HTTP-only cookies or secure storage).
+- **HTTPS**: Always use HTTPS to prevent token interception.
+
+---
+

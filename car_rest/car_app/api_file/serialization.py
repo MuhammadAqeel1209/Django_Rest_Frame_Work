@@ -3,6 +3,7 @@ from ..models import CarList, ShowRoom,Reivew
 
 
 class ReiviewSerializer(serializers.ModelSerializer):
+    apiUser = serializers.StringRelatedField(read_only = True)
     class Meta:
         model = Reivew
         exclude =('car',)

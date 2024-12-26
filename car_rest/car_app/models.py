@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator,MaxValueValidator
+from django.contrib.auth.models import User
 
 # Validators
 def alphanumeric(value):
@@ -28,6 +29,7 @@ class CarList(models.Model):
     
 
 class Reivew(models.Model):
+    apiUser = models.ForeignKey(User,on_delete=models.CASCADE)
     raiting = models.IntegerField(validators=[MinValueValidator,MaxValueValidator])
     comments = models.CharField(max_length=200,null=True)
     car = models.ForeignKey(CarList, null=True,on_delete=models.CASCADE,related_name='reiviews')
