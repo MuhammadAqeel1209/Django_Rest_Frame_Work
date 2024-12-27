@@ -550,6 +550,222 @@ class ProtectedView(APIView):
 - **Token Expiry**: Tokens do not expire by default. Consider using packages like `django-rest-framework-simplejwt` if you need expiration and refresh functionality.
 - **Secure Storage**: Tokens should be stored securely on the client side (e.g., HTTP-only cookies or secure storage).
 - **HTTPS**: Always use HTTPS to prevent token interception.
+To implement token authentication for user registration, login, and logout in your Django Rest Framework (DRF) project, you can follow these steps and update the `README.md` file accordingly.
 
 ---
 
+### **Token Authentication for User Registration, Login, and Logout**
+
+To enable token authentication for user registration, login, and logout, follow these steps:
+
+---
+
+### **1. Install the Required Package**
+
+Make sure that you have `djangorestframework` and `djangorestframework.authtoken` installed:
+
+```bash
+pip install djangorestframework
+pip install djangorestframework.authtoken
+```
+
+---
+
+### **2. Update `INSTALLED_APPS` in `settings.py`**
+
+Add `'rest_framework'` and `'rest_framework.authtoken'` to your `INSTALLED_APPS` in `settings.py`:
+
+```python
+INSTALLED_APPS = [
+    ...,
+    'rest_framework',
+    'rest_framework.authtoken',
+]
+```
+
+---
+
+### **3. Migrate the Database**
+
+Run the migrations to create necessary tables for token authentication:
+
+```bash
+python manage.py migrate
+```
+
+---
+
+### **4. Create the User Registration and Login Views**
+
+Create views for user registration and login in `views.py`:
+
+#### **`views.py`**
+```python
+from django.contrib.auth.models import User
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
+
+@api_view(['POST'])
+def register_user(request):
+    """
+    Register a new user and generate a token.
+    """
+    if request.method == 'POST':
+        username = request.data.get('username')
+        password = request.data.get('password')
+        email = request.data.get('email')
+
+        if not username or not password or not email:
+            return Response({"error": "All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.create_user(username=username, password=password, email=email)
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+def login_user(request):
+    """
+    Login an existing user and return a token.
+    """
+    if request.method == 'POST':
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        user = User.objects.filter(username=username).first()
+
+        if user and user.check_password(password):
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({"token": token.key}, status=status.HTTP_200_OK)
+
+        return Response({"error": "Invalid credentials."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def logout_user(request):
+    """
+    Logout a user by deleting their token.
+    """
+    if request.method == 'POST' and request.user.is_authenticated:
+        request.user.auth_token.delete()
+        return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
+    return Response({"error": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+```
+
+---
+
+### **5. Add the URLs for Registration, Login, and Logout**
+
+Update your `urls.py` to include endpoints for user registration, login, and logout:
+
+#### **`urls.py`**
+```python
+from django.urls import path
+from .views import register_user, login_user, logout_user
+
+urlpatterns = [
+    path('api/register/', register_user, name='register'),
+    path('api/login/', login_user, name='login'),
+    path('api/logout/', logout_user, name='logout'),
+]
+```
+
+---
+
+### **6. Configure Token Authentication in `settings.py`**
+
+Update your `settings.py` to enable token authentication:
+
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+```
+
+---
+
+### **7. Test the Endpoints**
+
+- **Register**: `POST /api/register/` with the fields `username`, `password`, and `email`.
+- **Login**: `POST /api/login/` with the fields `username` and `password`.
+- **Logout**: `POST /api/logout/` with the authorization token in the `Authorization` header.
+
+---
+
+### **8. Example Request and Response**
+
+#### **Register User**
+
+**Request**:
+
+```bash
+POST /api/register/
+Content-Type: application/json
+
+{
+    "username": "john_doe",
+    "password": "password123",
+    "email": "john@example.com"
+}
+```
+
+**Response**:
+
+```json
+{
+    "token": "abc123xyz"
+}
+```
+
+---
+
+#### **Login User**
+
+**Request**:
+
+```bash
+POST /api/login/
+Content-Type: application/json
+
+{
+    "username": "john_doe",
+    "password": "password123"
+}
+```
+
+**Response**:
+
+```json
+{
+    "token": "abc123xyz"
+}
+```
+
+---
+
+#### **Logout User**
+
+**Request**:
+
+```bash
+POST /api/logout/
+Authorization: Token abc123xyz
+```
+
+**Response**:
+
+```json
+{
+    "message": "Successfully logged out."
+}
+```
+
+---
