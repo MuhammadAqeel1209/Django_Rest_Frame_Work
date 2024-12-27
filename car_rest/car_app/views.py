@@ -11,6 +11,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import generics, mixins
 from rest_framework.exceptions import ValidationError
+from rest_framework.authentication import TokenAuthentication
 # from rest_framework.authentication import BasicAuthentication,SessionAuthentication
 # from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser,DjangoModelPermissions
 from rest_framework import viewsets
@@ -34,6 +35,8 @@ class ReiviewCreate(generics.CreateAPIView):
 class ReiviewList(generics.ListAPIView):
     # queryset = Reivew.objects.all()
     serializer_class = ReiviewSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [PermissionForAdmin]
     def get_queryset(self):
         pk = self.kwargs['pk']
         return Reivew.objects.filter(car=pk)
@@ -41,7 +44,8 @@ class ReiviewList(generics.ListAPIView):
 class ReiviewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Reivew.objects.all()
     serializer_class = ReiviewSerializer
-    permission_classes = [PermissionForAdmin]
+    permission_classes = [ReiviewReadUsers]
+    authentication_classes = [TokenAuthentication]
 
 
 # Model ViewSet 
