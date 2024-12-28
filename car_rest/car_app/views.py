@@ -1,10 +1,12 @@
 from django.shortcuts import get_object_or_404
 from .models import CarList, ShowRoom, Reivew
-
+from rest_framework.throttling import UserRateThrottle,AnonRateThrottle
 # from django.http import JsonResponse,HttpResponse
 # import json
 from .api_file.serialization import CarSerializer, ShowroomSerializer, ReiviewSerializer
+from .api_file.pagination import ReiviewListPage
 from .api_file.permissions import ReiviewReadUsers,PermissionForAdmin
+from .api_file.throating import ReiviewDetailThrottle,ReiviewListThrottle
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -12,8 +14,10 @@ from rest_framework.views import APIView
 from rest_framework import generics, mixins
 from rest_framework.exceptions import ValidationError
 from rest_framework.authentication import TokenAuthentication
-# from rest_framework.authentication import BasicAuthentication,SessionAuthentication
-# from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser,DjangoModelPermissions
+# from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from rest_framework.authentication import BasicAuthentication,SessionAuthentication
+from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser,DjangoModelPermissions
 from rest_framework import viewsets
 
 # ConcreteViewClasses
@@ -36,7 +40,10 @@ class ReiviewList(generics.ListAPIView):
     # queryset = Reivew.objects.all()
     serializer_class = ReiviewSerializer
     authentication_classes = [TokenAuthentication]
+    throttle_classes = [ReiviewListThrottle,AnonRateThrottle]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [PermissionForAdmin]
+    pagination_class = ReiviewListPage
     def get_queryset(self):
         pk = self.kwargs['pk']
         return Reivew.objects.filter(car=pk)
@@ -45,6 +52,7 @@ class ReiviewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Reivew.objects.all()
     serializer_class = ReiviewSerializer
     permission_classes = [ReiviewReadUsers]
+    throttle_classes = [ReiviewDetailThrottle,AnonRateThrottle]
     authentication_classes = [TokenAuthentication]
 
 

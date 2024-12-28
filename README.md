@@ -767,56 +767,6 @@ Authorization: Token abc123xyz
     "message": "Successfully logged out."
 }
 ```
-# Django Rest Framework (DRF) Car Management API
-
-This project demonstrates how to build a Car Management API using Django Rest Framework (DRF). Below are the steps and details for implementing the API.
-
-## Features
-- CRUD operations for car details
-- Token-based authentication
-- JWT (JSON Web Token) authentication
-
----
-
-## Prerequisites
-
-Make sure you have the following installed:
-- Python 3.8+
-- Django 4.0+
-- Django Rest Framework
-- djangorestframework-simplejwt (for JWT authentication)
-
-Install the required dependencies:
-
-```bash
-pip install django djangorestframework djangorestframework-simplejwt
-```
-
----
-
-## Project Setup
-
-### 1. Create a Django Project
-
-```bash
-django-admin startproject car_management
-cd car_management
-python manage.py startapp cars
-```
-
-### 2. Add the App to Installed Apps
-
-In `settings.py`, add `'cars'` and `'rest_framework'` to `INSTALLED_APPS`.
-
-```python
-INSTALLED_APPS = [
-    ...
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'cars',
-]
-```
-
 ### 3. Update the REST Framework Settings
 
 Add the following to `settings.py` to enable JWT authentication:
@@ -1003,6 +953,322 @@ Use tools like Postman or cURL to test the API endpoints. Ensure the following:
 ## Conclusion
 
 This project provides a simple yet robust foundation for building APIs using Django Rest Framework and JWT authentication.
+
+# Django Rest Framework Car Management API
+
+This repository provides a comprehensive implementation of a Car Management API using Django Rest Framework (DRF). The API supports CRUD operations for managing car details and includes features like token authentication, permissions, and now throttling.
+
+## Features
+- CRUD operations for car management
+- Token-based authentication
+- Permissions to control access
+- Throttling to limit the rate of requests (AnonRateThrottle & UserRateThrottle)
+
+```python
+from django.db import models
+
+class Car(models.Model):
+    make = models.CharField(max_length=50)
+    model = models.CharField(max_length=50)
+    year = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.make} {self.model} ({self.year})"
+```
+
+## Serializers
+The `CarSerializer` converts `Car` model instances to JSON and vice versa.
+
+```python
+from rest_framework import serializers
+from .models import Car
+
+class CarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Car
+        fields = '__all__'
+```
+
+## Views
+Class-based views handle API endpoints for the Car model.
+
+```python
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Car
+from .serializers import CarSerializer
+
+class CarList(APIView):
+    def get(self, request):
+        cars = Car.objects.all()
+        serializer = CarSerializer(cars, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = CarSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CarDetail(APIView):
+    def get_object(self, pk):
+        try:
+            return Car.objects.get(pk=pk)
+        except Car.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        car = self.get_object(pk)
+        serializer = CarSerializer(car)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        car = self.get_object(pk)
+        serializer = CarSerializer(car, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        car = self.get_object(pk)
+        car.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+```
+
+## Permissions
+Control access to the API using permissions.
+
+```python
+from rest_framework.permissions import IsAuthenticated
+
+class CarList(APIView):
+    permission_classes = [IsAuthenticated]
+    # Remaining methods remain the same
+```
+
+## Token Authentication
+Enable token-based authentication.
+
+1. Add `'rest_framework.authtoken'` to `INSTALLED_APPS`.
+2. Run migrations:
+   ```bash
+   python manage.py migrate
+   ```
+3. Obtain a token for a user:
+   ```bash
+   python manage.py drf_create_token <username>
+   ```
+4. Include the token in the `Authorization` header for API requests:
+   ```
+   Authorization: Token <token>
+   ```
+
+## Throttling
+Limit the rate of API requests using Django REST Framework's throttling classes.
+
+1. Add the following settings in `settings.py`:
+   ```python
+   REST_FRAMEWORK = {
+       'DEFAULT_THROTTLE_CLASSES': [
+           'rest_framework.throttling.AnonRateThrottle',
+           'rest_framework.throttling.UserRateThrottle',
+       ],
+       'DEFAULT_THROTTLE_RATES': {
+           'anon': '10/day',  # Anonymous users: 10 requests per day
+           'user': '100/day',  # Authenticated users: 100 requests per day
+       }
+   }
+   ```
+
+2. Apply throttling in views automatically based on the above settings.
+
+## Testing
+Use tools like Postman or cURL to test the API endpoints.
+
+### Example Requests
+#### Get all cars:
+```bash
+curl -X GET http://127.0.0.1:8000/api/cars/
+```
+
+#### Add a new car:
+```bash
+curl -X POST http://127.0.0.1:8000/api/cars/ \
+-H "Content-Type: application/json" \
+-d '{"make": "Toyota", "model": "Corolla", "year": 2020, "price": 20000.00}'
+```
+
+## Conclusion
+This API demonstrates how to build a robust backend with Django Rest Framework, including CRUD operations, authentication, permissions, and throttling. Use this as a starting point for your projects and customize it to suit your needs.
+
+```python
+from django.db import models
+
+class Car(models.Model):
+    make = models.CharField(max_length=50)
+    model = models.CharField(max_length=50)
+    year = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.make} {self.model} ({self.year})"
+```
+
+## Serializers
+The `CarSerializer` converts `Car` model instances to JSON and vice versa.
+
+```python
+from rest_framework import serializers
+from .models import Car
+
+class CarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Car
+        fields = '__all__'
+```
+
+## Views
+Class-based views handle API endpoints for the Car model.
+
+```python
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Car
+from .serializers import CarSerializer
+
+class CarList(APIView):
+    def get(self, request):
+        cars = Car.objects.all()
+        serializer = CarSerializer(cars, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = CarSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CarDetail(APIView):
+    def get_object(self, pk):
+        try:
+            return Car.objects.get(pk=pk)
+        except Car.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        car = self.get_object(pk)
+        serializer = CarSerializer(car)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        car = self.get_object(pk)
+        serializer = CarSerializer(car, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        car = self.get_object(pk)
+        car.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+```
+
+## Permissions
+Control access to the API using permissions.
+
+```python
+from rest_framework.permissions import IsAuthenticated
+
+class CarList(APIView):
+    permission_classes = [IsAuthenticated]
+    # Remaining methods remain the same
+```
+
+## Token Authentication
+Enable token-based authentication.
+
+1. Add `'rest_framework.authtoken'` to `INSTALLED_APPS`.
+2. Run migrations:
+   ```bash
+   python manage.py migrate
+   ```
+3. Obtain a token for a user:
+   ```bash
+   python manage.py drf_create_token <username>
+   ```
+4. Include the token in the `Authorization` header for API requests:
+   ```
+   Authorization: Token <token>
+   ```
+
+## Throttling
+Limit the rate of API requests using Django REST Framework's throttling classes.
+
+1. Add the following settings in `settings.py`:
+   ```python
+   REST_FRAMEWORK = {
+       'DEFAULT_THROTTLE_CLASSES': [
+           'rest_framework.throttling.AnonRateThrottle',
+           'rest_framework.throttling.UserRateThrottle',
+       ],
+       'DEFAULT_THROTTLE_RATES': {
+           'anon': '10/day',  # Anonymous users: 10 requests per day
+           'user': '100/day',  # Authenticated users: 100 requests per day
+       }
+   }
+   ```
+
+2. Apply throttling in views automatically based on the above settings.
+
+## Pagination
+Handle large datasets efficiently with pagination.
+
+1. Add the following settings in `settings.py`:
+   ```python
+   REST_FRAMEWORK = {
+       'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+       'PAGE_SIZE': 10  # Number of records per page
+   }
+   ```
+
+2. Paginate results in your views:
+   ```python
+   from rest_framework.generics import ListAPIView
+   from .models import Car
+   from .serializers import CarSerializer
+
+   class PaginatedCarList(ListAPIView):
+       queryset = Car.objects.all()
+       serializer_class = CarSerializer
+   ```
+
+3. Access paginated results by appending `?page=<number>` to the endpoint URL.
+
+## Testing
+Use tools like Postman or cURL to test the API endpoints.
+
+### Example Requests
+#### Get all cars:
+```bash
+curl -X GET http://127.0.0.1:8000/api/cars/
+```
+
+#### Add a new car:
+```bash
+curl -X POST http://127.0.0.1:8000/api/cars/ \
+-H "Content-Type: application/json" \
+-d '{"make": "Toyota", "model": "Corolla", "year": 2020, "price": 20000.00}'
+```
+
+## Conclusion
+This API demonstrates how to build a robust backend with Django Rest Framework, including CRUD operations, authentication, permissions, throttling, and pagination. Use this as a starting point for your projects and customize it to suit your needs.
 
 
 ---
