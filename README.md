@@ -767,5 +767,242 @@ Authorization: Token abc123xyz
     "message": "Successfully logged out."
 }
 ```
+# Django Rest Framework (DRF) Car Management API
+
+This project demonstrates how to build a Car Management API using Django Rest Framework (DRF). Below are the steps and details for implementing the API.
+
+## Features
+- CRUD operations for car details
+- Token-based authentication
+- JWT (JSON Web Token) authentication
+
+---
+
+## Prerequisites
+
+Make sure you have the following installed:
+- Python 3.8+
+- Django 4.0+
+- Django Rest Framework
+- djangorestframework-simplejwt (for JWT authentication)
+
+Install the required dependencies:
+
+```bash
+pip install django djangorestframework djangorestframework-simplejwt
+```
+
+---
+
+## Project Setup
+
+### 1. Create a Django Project
+
+```bash
+django-admin startproject car_management
+cd car_management
+python manage.py startapp cars
+```
+
+### 2. Add the App to Installed Apps
+
+In `settings.py`, add `'cars'` and `'rest_framework'` to `INSTALLED_APPS`.
+
+```python
+INSTALLED_APPS = [
+    ...
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'cars',
+]
+```
+
+### 3. Update the REST Framework Settings
+
+Add the following to `settings.py` to enable JWT authentication:
+
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+```
+
+---
+
+## Models
+
+In `cars/models.py`, define the `Car` model:
+
+```python
+from django.db import models
+
+class Car(models.Model):
+    name = models.CharField(max_length=255)
+    brand = models.CharField(max_length=255)
+    year = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.brand} {self.name} ({self.year})"
+```
+
+Run migrations:
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+---
+
+## Serializers
+
+In `cars/serializers.py`, create a serializer for the `Car` model:
+
+```python
+from rest_framework import serializers
+from .models import Car
+
+class CarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Car
+        fields = '__all__'
+```
+
+---
+
+## Views
+
+In `cars/views.py`, create views for CRUD operations:
+
+```python
+from rest_framework import generics
+from .models import Car
+from .serializers import CarSerializer
+
+class CarListCreateView(generics.ListCreateAPIView):
+    queryset = Car.objects.all()
+    serializer_class = CarSerializer
+
+class CarRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Car.objects.all()
+    serializer_class = CarSerializer
+```
+
+---
+
+## URLs
+
+In `cars/urls.py`, define routes for the views:
+
+```python
+from django.urls import path
+from .views import CarListCreateView, CarRetrieveUpdateDestroyView
+
+urlpatterns = [
+    path('cars/', CarListCreateView.as_view(), name='car-list-create'),
+    path('cars/<int:pk>/', CarRetrieveUpdateDestroyView.as_view(), name='car-detail'),
+]
+```
+
+Include these URLs in the project `urls.py`:
+
+```python
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include('cars.urls')),
+]
+```
+
+---
+
+## Permissions
+
+To apply permissions, update `cars/views.py`:
+
+```python
+from rest_framework.permissions import IsAuthenticated
+
+class CarListCreateView(generics.ListCreateAPIView):
+    queryset = Car.objects.all()
+    serializer_class = CarSerializer
+    permission_classes = [IsAuthenticated]
+
+class CarRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Car.objects.all()
+    serializer_class = CarSerializer
+    permission_classes = [IsAuthenticated]
+```
+
+---
+
+## JWT Authentication
+
+### 1. Configure JWT Routes
+
+In the project `urls.py`, add JWT routes:
+
+```python
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+urlpatterns += [
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+]
+```
+
+### 2. Obtain Tokens
+
+- To get a token, send a POST request to `/api/token/` with valid user credentials.
+
+Example request:
+
+```bash
+POST /api/token/
+{
+    "username": "your_username",
+    "password": "your_password"
+}
+```
+
+- Refresh tokens using `/api/token/refresh/`:
+
+```bash
+POST /api/token/refresh/
+{
+    "refresh": "your_refresh_token"
+}
+```
+
+### 3. Use Tokens in Requests
+
+Include the access token in the `Authorization` header for protected routes:
+
+```bash
+Authorization: Bearer your_access_token
+```
+
+---
+
+## Testing
+
+Use tools like Postman or cURL to test the API endpoints. Ensure the following:
+1. JWT authentication is required for protected routes.
+2. CRUD operations work as expected.
+3. Tokens are refreshed successfully.
+
+---
+
+## Conclusion
+
+This project provides a simple yet robust foundation for building APIs using Django Rest Framework and JWT authentication.
+
 
 ---
